@@ -200,10 +200,12 @@ public class Principal {
 
         // Buscar libros por idioma
         List<Libro> libros = repositorio.findByIdiomasContaining(idiomaBuscado);
+        long count = repositorio.countByIdioma(idiomaBuscado);
 
         if (libros.isEmpty()) {
             System.out.println("No se encontraron libros en el idioma especificado.");
         } else {
+
             String nombreIdioma;
             switch (idiomaBuscado) {
                 case "es":
@@ -220,6 +222,9 @@ public class Principal {
 
             System.out.println("Libros en " + nombreIdioma + ":");
             libros.forEach(libro -> System.out.println(libro.getTitulo()));
+
+            // Mostrar el contador de libros por idioma
+            System.out.println("Número total de libros en " + nombreIdioma + ": " + count);
         }
     }
 
