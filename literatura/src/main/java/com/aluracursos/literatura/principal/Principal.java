@@ -1,6 +1,7 @@
 package com.aluracursos.literatura.principal;
 
 import com.aluracursos.literatura.model.*;
+import com.aluracursos.literatura.repository.AutorRepository;
 import com.aluracursos.literatura.repository.LibroRepository;
 import com.aluracursos.literatura.service.ConsumoAPI;
 import com.aluracursos.literatura.service.ConvierteDatos;
@@ -14,15 +15,17 @@ public class Principal {
     private Scanner teclado = new Scanner(System.in);
     private ConsumoAPI consumoApi = new ConsumoAPI();
     private final String URL_BASE = "https://gutendex.com/books/";
-    private final String API_KEY = "TU-APIKEY-OMDB";
     private ConvierteDatos conversor = new ConvierteDatos();
     private LibroRepository repositorio;
+
+    private AutorRepository autorRepositorio;
 
     private List<Libro> libros;
     private Optional<Libro> libroBuscado;
 
-    public Principal(LibroRepository repository) {
-        this.repositorio = repository;
+    public Principal(LibroRepository repositorio, AutorRepository autorRepositorio) {
+        this.repositorio = repositorio;
+        this.autorRepositorio = autorRepositorio;
     }
 
     public void muestraElMenu() {
@@ -36,6 +39,7 @@ public class Principal {
                     5 - Listar libros por idioma 
                     6 - Los 10 libros más descargados
                     7 - Buscar libros por Autor
+                    8 - Generar Estadisticas del número de descargas
                                   
                     0 - Salir
                     """;
@@ -63,7 +67,10 @@ public class Principal {
                     lostop10libros();
                     break;
                 case 7:
-                    buscarLibroPorAutor();
+                    buscarLibroPorAutores();
+                    break;
+                case 8:
+                    generarEstadisticasDeDescargas();
                     break;
 
                 case 0:
@@ -153,7 +160,7 @@ public class Principal {
     }
 
     private void listarAutoresRegistrados() {
-        List<Autor> autores = repositorio.findAllAutores();
+        List<Autor> autores = autorRepositorio.findAllAutores();
 
         System.out.println("*".repeat(50)); // Línea decorativa antes de la lista
 
@@ -174,7 +181,7 @@ public class Principal {
         int year = Integer.parseInt(teclado.nextLine());
 
         // Buscar autores vivos en el año especificado
-        List<Autor> autoresVivos = repositorio.findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoGreaterThanEqual(year, year);
+        List<Autor> autoresVivos = autorRepositorio.findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoGreaterThanEqual(year, year);
 
         if (!autoresVivos.isEmpty()) {
             System.out.println("Autores vivos en el año " + year + ":");
@@ -252,7 +259,7 @@ public class Principal {
 
     }
 
-    public void buscarLibroPorAutor() {
+    public void buscarLibroPorAutores() {
         System.out.println("Ingrese el nombre del autor:");
         try {
             var nombreAutor = teclado.nextLine();
@@ -260,47 +267,77 @@ public class Principal {
                 System.out.println("No se ingresó ningún nombre de autor.");
                 return;
             }
-            // Aquí debería estar el bloque try para manejar la llamada a getDatosLibroPorAutor
-            DatosLibro datos = getDatosLibroPorAutor(nombreAutor);
 
-            Optional<Libro> libroExistente = repositorio.findByTituloContainsIgnoreCase(datos.titulo());
+            // Obtener lista de libros del autor
+            List<DatosLibro> listaDeLibros = getDatosLibroPorAutores(nombreAutor);
 
-            if (libroExistente.isPresent()) {
-                System.out.println("El libro '" + datos.titulo() + "' ya está en el repositorio.");
-            } else {
-                System.out.println("Libro encontrado:");
-                System.out.println(datos);
+            if (listaDeLibros.isEmpty()) {
+                System.out.println("No se encontraron libros del autor '" + nombreAutor + "'.");
+                return;
+            }
 
-                Libro libro = new Libro();
-                libro.setTitulo(datos.titulo());
-                List<Autor> autores = new ArrayList<>();
-                for (DatosAutor datosAutor : datos.autor()) {
-                    autores.add(new Autor(datosAutor));
+            for (DatosLibro datos : listaDeLibros) {
+                Optional<Libro> libroExistente = repositorio.findByTituloContainsIgnoreCase(datos.titulo());
+
+                if (libroExistente.isPresent()) {
+                    System.out.println("El libro '" + datos.titulo() + "' ya está en el repositorio.");
+                } else {
+                    System.out.println("Libro encontrado:");
+                    System.out.println(datos);
+
+                    List<Autor> autores = new ArrayList<>();
+                    for (DatosAutor datosAutor : datos.autor()) {
+                        Optional<Autor> autorExistente = autorRepositorio.findByNombreIgnoreCase(datosAutor.nombre());
+                        Autor autor;
+                        if (autorExistente.isPresent()) {
+                            System.out.println("El autor '" + datosAutor.nombre() + "' ya está en el repositorio.");
+                            autor = autorExistente.get();
+                        } else {
+                            autor = new Autor(datosAutor);
+                            autor = autorRepositorio.save(autor);
+                            System.out.println("Autor guardado en el repositorio.");
+                        }
+                        autores.add(autor);
+                    }
+
+                    Libro libro = new Libro();
+                    libro.setTitulo(datos.titulo());
+                    libro.setAutor(autores);
+                    libro.setIdiomas(datos.idiomas());
+                    libro.setNumeroDeDescargas(datos.numeroDeDescargas());
+
+                    repositorio.save(libro);
+
+                    System.out.println("Libro guardado en el repositorio.");
                 }
-                libro.setAutor(autores);
-                libro.setIdiomas(datos.idiomas());
-                libro.setNumeroDeDescargas(datos.numeroDeDescargas());
-
-                repositorio.save(libro);
-
-                System.out.println("Libro guardado en el repositorio.");
             }
         } catch (NoSuchElementException e) {
             System.out.println(e.getMessage());
         }
     }
 
-    private DatosLibro getDatosLibroPorAutor(String nombreAutor) {
+    private List<DatosLibro> getDatosLibroPorAutores(String nombreAutor) {
         var json = consumoApi.obtenerDatos(URL_BASE + "?search=" + nombreAutor.replace(" ", "+"));
         var datosBusqueda = conversor.obtenerDatos(json, Datos.class);
-        Optional<DatosLibro> libroBuscado = datosBusqueda.resultados().stream()
+        return datosBusqueda.resultados().stream()
                 .filter(libro -> libro.autor().stream().anyMatch(autor -> autor.nombre().toUpperCase().contains(nombreAutor.toUpperCase())))
-                .findFirst();
-        if (libroBuscado.isPresent()) {
-            return libroBuscado.get();
-        } else {
-            throw new NoSuchElementException("No se encontró ningún libro del autor '" + nombreAutor + "'.");
-        }
+                .collect(Collectors.toList());
     }
 
-}
+
+        private void generarEstadisticasDeDescargas() {
+            var json = consumoApi.obtenerDatos(URL_BASE);
+            System.out.println(json);
+            var datos = conversor.obtenerDatos(json, Datos.class);
+
+            // Trabajando con estadísticas
+            DoubleSummaryStatistics est = datos.resultados().stream()
+                    .filter(d -> d.numeroDeDescargas() > 0)
+                    .collect(Collectors.summarizingDouble(DatosLibro::numeroDeDescargas));
+            System.out.println("Cantidad media de descargas: " + est.getAverage());
+            System.out.println("Cantidad máxima de descargas: " + est.getMax());
+            System.out.println("Cantidad mínima de descargas: " + est.getMin());
+            System.out.println("Cantidad de registros evaluados para calcular las estadísticas: " + est.getCount());
+        }
+
+    }

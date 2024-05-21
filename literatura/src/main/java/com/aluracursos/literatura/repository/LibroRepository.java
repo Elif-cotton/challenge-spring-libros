@@ -15,8 +15,7 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
 
     Optional<Libro> findByTituloContainsIgnoreCase(String nombreLibro);
 
-    @Query("SELECT a FROM Autor a")
-    List<Autor> findAllAutores();
+
 
     @Query(value = "SELECT * FROM libros WHERE idiomas @> ARRAY[?1]", nativeQuery = true)
     List<Libro> findByIdiomasContaining(String idioma);
@@ -25,6 +24,5 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     long countByIdioma(@Param("idioma") String idioma);
 
     //List<Autor> findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoGreaterThanEqual(int year, int year1);
-    @Query("SELECT a FROM Autor a WHERE CAST(a.fechaDeNacimiento AS integer) <= :year1 AND (CAST(a.fechaDeFallecimiento AS integer) IS NULL OR CAST(a.fechaDeFallecimiento AS integer) >= :year2)")
-    List<Autor> findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoGreaterThanEqual(@Param("year1") int year1, @Param("year2") int year2);
+
 }
