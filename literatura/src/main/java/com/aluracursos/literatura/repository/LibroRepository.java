@@ -15,8 +15,6 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
 
     Optional<Libro> findByTituloContainsIgnoreCase(String nombreLibro);
 
-
-
     @Query(value = "SELECT * FROM libros WHERE idiomas @> ARRAY[?1]", nativeQuery = true)
     List<Libro> findByIdiomasContaining(String idioma);
 

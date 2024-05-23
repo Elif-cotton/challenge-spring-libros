@@ -19,5 +19,5 @@ public interface AutorRepository extends JpaRepository<Autor, Long> {
     @Query("SELECT a FROM Autor a WHERE CAST(a.fechaDeNacimiento AS integer) <= :year1 AND (CAST(a.fechaDeFallecimiento AS integer) IS NULL OR CAST(a.fechaDeFallecimiento AS integer) >= :year2)")
     List<Autor> findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoGreaterThanEqual(@Param("year1") int year1, @Param("year2") int year2);
 
-    Optional<Autor> findByNombreIgnoreCase(String nombre);
+    //Optional<Autor> findByNombreIgnoreCase(String nombre);
 }

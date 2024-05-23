@@ -67,7 +67,7 @@ public class Principal {
                     lostop10libros();
                     break;
                 case 7:
-                    buscarLibroPorAutores();
+                    buscarLibroPorAutor();
                     break;
                 case 8:
                     generarEstadisticasDeDescargas();
@@ -259,7 +259,7 @@ public class Principal {
 
     }
 
-    public void buscarLibroPorAutores() {
+    private void buscarLibroPorAutor() {
         System.out.println("Ingrese el nombre del autor:");
         try {
             var nombreAutor = teclado.nextLine();
@@ -268,64 +268,50 @@ public class Principal {
                 return;
             }
 
-            // Obtener lista de libros del autor
-            List<DatosLibro> listaDeLibros = getDatosLibroPorAutores(nombreAutor);
+            // Aquí debería estar el bloque try para manejar la llamada a getDatosLibroPorAutor
+            DatosLibro datos = getDatosLibroPorAutor(nombreAutor);
 
-            if (listaDeLibros.isEmpty()) {
-                System.out.println("No se encontraron libros del autor '" + nombreAutor + "'.");
-                return;
-            }
+            Optional<Libro> libroExistente = repositorio.findByTituloContainsIgnoreCase(datos.titulo());
 
-            for (DatosLibro datos : listaDeLibros) {
-                Optional<Libro> libroExistente = repositorio.findByTituloContainsIgnoreCase(datos.titulo());
+            if (libroExistente.isPresent()) {
+                System.out.println("El libro '" + datos.titulo() + "' ya está en el repositorio.");
+            } else {
+                System.out.println("Libro encontrado:");
+                System.out.println(datos);
 
-                if (libroExistente.isPresent()) {
-                    System.out.println("El libro '" + datos.titulo() + "' ya está en el repositorio.");
-                } else {
-                    System.out.println("Libro encontrado:");
-                    System.out.println(datos);
-
-                    List<Autor> autores = new ArrayList<>();
-                    for (DatosAutor datosAutor : datos.autor()) {
-                        Optional<Autor> autorExistente = autorRepositorio.findByNombreIgnoreCase(datosAutor.nombre());
-                        Autor autor;
-                        if (autorExistente.isPresent()) {
-                            System.out.println("El autor '" + datosAutor.nombre() + "' ya está en el repositorio.");
-                            autor = autorExistente.get();
-                        } else {
-                            autor = new Autor(datosAutor);
-                            autor = autorRepositorio.save(autor);
-                            System.out.println("Autor guardado en el repositorio.");
-                        }
-                        autores.add(autor);
-                    }
-
-                    Libro libro = new Libro();
-                    libro.setTitulo(datos.titulo());
-                    libro.setAutor(autores);
-                    libro.setIdiomas(datos.idiomas());
-                    libro.setNumeroDeDescargas(datos.numeroDeDescargas());
-
-                    repositorio.save(libro);
-
-                    System.out.println("Libro guardado en el repositorio.");
+                Libro libro = new Libro();
+                libro.setTitulo(datos.titulo());
+                List<Autor> autores = new ArrayList<>();
+                for (DatosAutor datosAutor : datos.autor()) {
+                    autores.add(new Autor(datosAutor));
                 }
+                libro.setAutor(autores);
+                libro.setIdiomas(datos.idiomas());
+                libro.setNumeroDeDescargas(datos.numeroDeDescargas());
+
+                repositorio.save(libro);
+
+                System.out.println("Libro guardado en el repositorio.");
             }
         } catch (NoSuchElementException e) {
             System.out.println(e.getMessage());
         }
     }
 
-    private List<DatosLibro> getDatosLibroPorAutores(String nombreAutor) {
+    private DatosLibro getDatosLibroPorAutor(String nombreAutor) {
         var json = consumoApi.obtenerDatos(URL_BASE + "?search=" + nombreAutor.replace(" ", "+"));
         var datosBusqueda = conversor.obtenerDatos(json, Datos.class);
-        return datosBusqueda.resultados().stream()
+        Optional<DatosLibro> libroBuscado = datosBusqueda.resultados().stream()
                 .filter(libro -> libro.autor().stream().anyMatch(autor -> autor.nombre().toUpperCase().contains(nombreAutor.toUpperCase())))
-                .collect(Collectors.toList());
+                .findFirst();
+        if (libroBuscado.isPresent()) {
+            return libroBuscado.get();
+        } else {
+            throw new NoSuchElementException("No se encontró ningún libro del autor '" + nombreAutor + "'.");
+        }
     }
 
-
-        private void generarEstadisticasDeDescargas() {
+    private void generarEstadisticasDeDescargas() {
             var json = consumoApi.obtenerDatos(URL_BASE);
             System.out.println(json);
             var datos = conversor.obtenerDatos(json, Datos.class);
@@ -338,6 +324,6 @@ public class Principal {
             System.out.println("Cantidad máxima de descargas: " + est.getMax());
             System.out.println("Cantidad mínima de descargas: " + est.getMin());
             System.out.println("Cantidad de registros evaluados para calcular las estadísticas: " + est.getCount());
-        }
-
     }
+
+}
