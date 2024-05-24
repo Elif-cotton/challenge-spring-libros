@@ -1,11 +1,9 @@
 package com.aluracursos.literatura.principal;
 
 import com.aluracursos.literatura.model.*;
-import com.aluracursos.literatura.repository.AutorRepository;
 import com.aluracursos.literatura.repository.LibroRepository;
 import com.aluracursos.literatura.service.ConsumoAPI;
 import com.aluracursos.literatura.service.ConvierteDatos;
-import com.fasterxml.jackson.annotation.JsonAlias;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,14 +16,11 @@ public class Principal {
     private ConvierteDatos conversor = new ConvierteDatos();
     private LibroRepository repositorio;
 
-    private AutorRepository autorRepositorio;
-
     private List<Libro> libros;
     private Optional<Libro> libroBuscado;
 
-    public Principal(LibroRepository repositorio, AutorRepository autorRepositorio) {
+    public Principal(LibroRepository repositorio) {
         this.repositorio = repositorio;
-        this.autorRepositorio = autorRepositorio;
     }
 
     public void muestraElMenu() {
@@ -160,7 +155,7 @@ public class Principal {
     }
 
     private void listarAutoresRegistrados() {
-        List<Autor> autores = autorRepositorio.findAllAutores();
+        List<Autor> autores = repositorio.findAllAutores();
 
         System.out.println("*".repeat(50)); // Línea decorativa antes de la lista
 
@@ -177,16 +172,29 @@ public class Principal {
 
     private void listarAutoresVivosPorAno() {
 
-        System.out.println("Ingrese el año para listar autores vivos:");
-        int year = Integer.parseInt(teclado.nextLine());
+        boolean añoValido = false;
+        int year = 0;
+
+        while (!añoValido) {
+            System.out.println("Ingrese el año para listar autores vivos:");
+
+            // Validar si el año ingresado es un número válido
+            try {
+                year = Integer.parseInt(teclado.nextLine());
+                añoValido = true;
+            } catch (NumberFormatException e) {
+                System.out.println("Por favor, ingrese un año válido.");
+            }
+        }
 
         // Buscar autores vivos en el año especificado
-        List<Autor> autoresVivos = autorRepositorio.findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoGreaterThanEqual(year, year);
+        List<Autor> autoresVivos = repositorio.findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoGreaterThanEqual(year, year);
 
         if (!autoresVivos.isEmpty()) {
             System.out.println("Autores vivos en el año " + year + ":");
             for (Autor autor : autoresVivos) {
                 System.out.println(autor.getNombre());
+                System.out.println("***************************");
             }
         } else {
             System.out.println("No hay autores vivos en el año " + year);
@@ -232,6 +240,7 @@ public class Principal {
 
             // Mostrar el contador de libros por idioma
             System.out.println("Número total de libros en " + nombreIdioma + ": " + count);
+            System.out.println("***************************");
         }
     }
 
@@ -247,6 +256,7 @@ public class Principal {
                 .limit(10)
                 .map(l -> l.titulo().toUpperCase())
                 .forEach(System.out::println);
+        System.out.println("***************************");
 
         //Trabajando con estadisticas
         DoubleSummaryStatistics est = datos.resultados().stream()
@@ -256,7 +266,7 @@ public class Principal {
         System.out.println("Cantidad máxima de descargas: "+ est.getMax());
         System.out.println("Cantidad mínima de descargas: " + est.getMin());
         System.out.println("Cantidad de registros evaluados para calcular las estadisticas: " + est.getCount());
-
+        System.out.println("***************************");
     }
 
     private void buscarLibroPorAutor() {
@@ -324,6 +334,7 @@ public class Principal {
             System.out.println("Cantidad máxima de descargas: " + est.getMax());
             System.out.println("Cantidad mínima de descargas: " + est.getMin());
             System.out.println("Cantidad de registros evaluados para calcular las estadísticas: " + est.getCount());
+            System.out.println("***************************");
     }
 
 }

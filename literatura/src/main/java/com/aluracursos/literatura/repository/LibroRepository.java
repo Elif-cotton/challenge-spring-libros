@@ -21,6 +21,11 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
     @Query(value = "SELECT COUNT(*) FROM libros WHERE idiomas @> ARRAY[:idioma]", nativeQuery = true)
     long countByIdioma(@Param("idioma") String idioma);
 
-    //List<Autor> findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoGreaterThanEqual(int year, int year1);
+    @Query("SELECT a FROM Autor a")
+    List<Autor> findAllAutores();
+
+    @Query("SELECT a FROM Autor a WHERE CAST(a.fechaDeNacimiento AS integer) <= :year1 AND (CAST(a.fechaDeFallecimiento AS integer) IS NULL OR CAST(a.fechaDeFallecimiento AS integer) >= :year2)")
+    List<Autor> findByFechaDeNacimientoLessThanEqualAndFechaDeFallecimientoGreaterThanEqual(@Param("year1") int year1, @Param("year2") int year2);
+
 
 }
