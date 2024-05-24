@@ -278,7 +278,7 @@ public class Principal {
                 return;
             }
 
-            // Aquí debería estar el bloque try para manejar la llamada a getDatosLibroPorAutor
+            // Buscar información en la API
             DatosLibro datos = getDatosLibroPorAutor(nombreAutor);
 
             Optional<Libro> libroExistente = repositorio.findByTituloContainsIgnoreCase(datos.titulo());
