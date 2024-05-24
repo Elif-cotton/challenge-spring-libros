@@ -11,7 +11,18 @@ ya que es una parte esencial del programa ONE, donde tendrás la oportunidad de 
 como el consumo de APIs externas, la persistencia de datos, entre otros..
 
 ```Java
-aplicaras todos los conocimientos adquiridos en Java, Spring y Base de Datos.
+Se aplicaron todos los conocimientos adquiridos en Java, Spring y Base de Datos.
+Menú del proyecto:
+                    1 - Buscar libros por título
+                    2 - Listar libros registrados
+                    3 - Listar autores registrados
+                    4 - Listar autores vivos en un determinado año
+                    5 - Listar libros por idioma 
+                    6 - Los 10 libros más descargados
+                    7 - Buscar libros por Autor
+                    8 - Generar Estadisticas del número de descargas
+                                  
+                    0 - Salir
 ```
 
 ## Para este desafío se utilizó:
