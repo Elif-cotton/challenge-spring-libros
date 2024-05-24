@@ -23,8 +23,6 @@ aplicaras todos los conocimientos adquiridos en Java, Spring y Base de Datos.
   ![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
     ![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
 
-## Web: 
 
-Este es el sitio web creado [CHALLENGE]([https://elif-cotton.github.io/challengeone.github.io/](https://github.com/Elif-cotton/challenge-spring-libros/tree/main))
 
 
