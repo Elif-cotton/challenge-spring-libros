@@ -28,4 +28,3 @@ aplicaras todos los conocimientos adquiridos en Java, Spring y Base de Datos.
 Este es el sitio web creado [CHALLENGE](https://elif-cotton.github.io/challengeone.github.io/)
 
 
-![image](https://github.com/Elif-cotton/challengeone.github.io/assets/128503850/765577bc-d459-49db-8fbf-357c729ba73d)
